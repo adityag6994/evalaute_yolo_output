@@ -80,60 +80,12 @@ def resize_to_orignal_img(bbox):
     box[3] = (bbox[3] * img_dim[1]) / model_dim[1]
     return box
 
-# [140.7680985, 298.25052, 63.446743, 116.84668]
-# [168.148375, 78.24666, 163.61497, 139.35684]
 
 for i, a in enumerate(bb):
-    # [x,y,w,h] = xyc_to_xytl(a)
     [x, y, w, h] = resize_to_orignal_img(xyc_to_xytl(a))
-    # [x, y, w, h] = a
-
-    # [144.49033187379808, 458.84695384615384, 65.12442130048076, 179.7641230769231]
-    # [172.59460606971152, 120.37947692307694, 167.9413273798077, 214.39513846153847]
-
     print([x,y,w,h])
-    # top left     : [x  , y  ]
-    # bottom right : [x+w, y+h]
-    # [x,y,w,h] = resize_to_orignal_img(xyc_to_xytl(a))
     rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor=colors[i], facecolor='none')
-    # ax.add_patch(rect)
-
-    # rect = patches.Rectangle((a[0], a[1]), a[2], a[3], linewidth=1, edgecolor=colors[i], facecolor='none')
-
     plt.plot(x, y, marker='o', color="white")
-    # plt.plot(x, y, marker='o', color="white")
     ax.add_patch(rect)
 
 plt.show()
-
-# import collections
-# import matplotlib.pyplot as plt
-# import matplotlib.image as mpimg
-# import matplotlib.patches as patches
-#
-# img = mpimg.imread('/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/images/COCO_val2014_000000000285.jpg')
-#
-# imgplot = plt.imshow(img)
-#
-# fig, ax = plt.subplots()
-# ax.imshow(img)
-#
-# bb=[[50.372324, 50.52951, 100.3389, 100.37964],
-#     [14.372324, 77.52951, 563.3389, 624.37964]]
-#    # [203.43274, 217.95526,352.1335,360.08957 ]]
-# colors = ['b','r']
-# for i,a in enumerate(bb):
-#     # x = a[0]
-#     # y = a[1]
-#     # w = a[2]
-#     # h = a[3]
-#     x = a[0]
-#     y = a[1]
-#     w = a[2]
-#     h = a[3]
-#     rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor=colors[i], facecolor='none')
-#     plt.plot(x, y, marker='o', color="white")
-#     plt.plot(x, y, marker='o', color="white")
-#     ax.add_patch(rect)
-#
-# plt.show()

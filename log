@@ -216,19 +216,19 @@ added 2 new images, to have same classes in multiple images
 +-------+-------------+---------+
 | Index | Class       | AP      |
 +-------+-------------+---------+
-| 0     | person      | 0.84821 |
+| 0*    | person      | 0.84821 |
 | 2     | car         | 0.50000 |
-| 18    | sheep       | 0.70139 |
-| 20    | elephant    | 0.85714 |
-| 21    | bear        | 1.00000 |
-| 31    | snowboard   | 1.00000 |
-| 33    | kite        | 1.00000 |
-| 36    | skateboard  | 1.00000 |
-| 44    | spoon       | 1.00000 |
-| 45    | bowl        | 1.00000 |
-| 47    | apple       | 1.00000 |
-| 50    | broccoli    | 0.60522 |
-| 60    | diningtable | 1.00000 |
+| 18*   | sheep       | 0.70139 |
+| 20*   | elephant    | 0.85714 |
+| 21*   | bear        | 1.00000 |
+| 31*   | snowboard   | 1.00000 |
+| 33*   | kite        | 1.00000 |
+| 36*   | skateboard  | 1.00000 |
+| 44*   | spoon       | 1.00000 |
+| 45*   | bowl        | 1.00000 |
+| 47*   | apple       | 1.00000 |
+| 50*   | broccoli    | 0.60522 |
+| 60*   | diningtable | 1.00000 |
 +-------+-------------+---------+
 
 /home/gabbar/Desktop/naukri_2022/code/venv/bin/python /home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/get_predictions.py

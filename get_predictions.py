@@ -13,7 +13,7 @@ import cv2
 eps = 0.00001
 objectness_th = 0.5
 nms_th = 0.5
-iou_th = 0.5
+iou_th = 0.3
 model_img_dim = [416, 416]  # [width height]
 prediction_list = ['/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/285.npy',
                    '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/757.npy',
@@ -95,8 +95,7 @@ def resize_to_orignal_img(bbox, img_dim, model_dim):
 def get_valid_box(pred, thresh, img_dim, model_dim, img_id):
     cls_pred = collections.defaultdict(list)
     final_cls_pred = collections.defaultdict(list)
-    # final_cls_pred_orig = collections.defaultdict(list)
-    # sort precitions based on classes
+    # arrange predicitions based on classes
     for p in pred:
         cls_pred[p[1]].append(p[0])
 
@@ -107,6 +106,7 @@ def get_valid_box(pred, thresh, img_dim, model_dim, img_id):
         while len(cls_pred[k]):
             # comapre with highest score and remove if exceeds threshold
             current_max_pred = cls_pred[k][0]
+            # only single box, nothing to compare
             if len(cls_pred[k]) == 1:
                 # final_cls_pred[k].append(cls_pred[k][0])
                 final_cls_pred[k].append(
@@ -116,6 +116,7 @@ def get_valid_box(pred, thresh, img_dim, model_dim, img_id):
             else:
                 to_remove = []
                 for index in range(1, len(cls_pred[k])):
+                    # if iou greater than threshold, remove it
                     current_iou = iou(xywh2xyxy(current_max_pred[:-1]),
                                       xywh2xyxy(cls_pred[k][index][:-1]))
                     if current_iou > nms_th:
@@ -135,11 +136,9 @@ def get_valid_box(pred, thresh, img_dim, model_dim, img_id):
 
 
 def apply_nms(pred_list):
-    # final_list = []
+    # contain valid boxes after applying nms
     final_list = collections.defaultdict(list)
     for ii, i in enumerate(pred_list):
-        # print('+-----+------+-----+')
-        # print(i.split('/')[-1])
 
         current_predictions = np.load(i)[0]
         valid_pred = []
@@ -151,10 +150,7 @@ def apply_nms(pred_list):
         # 2) apply nms
         img_dim = cv2.imread(img_list[ii]).shape  # [height, width, channel
         img_dim = [img_dim[1], img_dim[0]]  # [width, height]
-        # if final_list.has_key(str(i.split('/')[-1][:-4]))):
         final_list[str(i.split('/')[-1][:-4])].append([get_valid_box(valid_pred, nms_th, img_dim, model_img_dim, i.split('/')[-1][:-4]), img_dim])
-        # else:
-        #     final_list[str(i.split('/')[-1][:-4])]=[]
 
     return final_list
 
@@ -245,14 +241,19 @@ def get_ap(cls_id, prec_recall_table):
         a.append(gap*(i+1))
 
     ap = []
+    ap_ = []
     for i in a:
-        ans = 0
-        if len([k for k in recall if k >= i]):
-            ans = [k for k in recall if k >= i][0]
+        ans  = 0
+        ans_ = 0
+        valid_p = [k for k in recall if k >= i]
+        if len(valid_p):
+            ans  = prec[recall.index([k for k in recall if k>= i][0])]
+            ans_ = recall[valid_p.index(valid_p[0])]
         # print(i, ans)
         ap.append(ans)
-    print(cls_id, np.average(ap[:-1]))
-    return
+        ap_.append(ans_)
+    # print(cls_id, ":" ,np.average(ap[:-1]))
+    return np.average(ap[:-1])
 
 
 def evaluate(pred_list):
@@ -275,6 +276,7 @@ def evaluate(pred_list):
                                           [float(i) for i in lbl.split(' ')[1:5]]])
 
     #- update -###
+    # merge all predictions from same class with flags to represent FP/TP, img-size, iou if it's TP
     pred_upd = collections.defaultdict(list)
     for k in pred.keys():
         t = collections.defaultdict(list)
@@ -285,6 +287,7 @@ def evaluate(pred_list):
 
     gt_upd = collections.defaultdict(list)
     total_gt_per_class = collections.defaultdict(list)
+    # merge gt of single class into one dict from all images
     for k in gt.keys():
         t = collections.defaultdict(list)
         cnt = 0
@@ -297,17 +300,17 @@ def evaluate(pred_list):
 
     pred_final = collections.defaultdict(list)
     prec_recall_list = collections.defaultdict(list) # all precision-recall values
+    # assign corresponding GT to each prediction if IOU is greater than threshold
     for k_pr in pred_upd.keys(): # class
         for im_pr in pred_upd[k_pr][0].keys(): # image
             assign_gt(pred_upd[k_pr][0][im_pr], gt_upd[str(k_pr)][0][int(im_pr)])
 
         for imgs in pred_upd[k_pr][0]:
             for box in pred_upd[k_pr][0][str(imgs)]:
-                # print(imgs, box)
                 # img_name, objectness_score, TP/FP
                 pred_final[k_pr].append([imgs, box[1], box[2]])
-                # print(k_pr,[imgs, box[1], box[2]])
 
+        # sort based on objectness score
         cur_cls_pred = pred_final[k_pr]
         cur_cls_pred.sort(key = lambda cur_cls_pred:cur_cls_pred[1])
         cur_cls_pred.reverse()
@@ -315,6 +318,7 @@ def evaluate(pred_list):
         # l1   1    0     1       1
         class_stats = [[0, 0, 0, total_gt_per_class[str(k_pr)][0]]]
         class_prec_recall = [[0, 0]]
+        # calculate precision and recall
         for i in cur_cls_pred:
             # print(i)
             temp_tpfp = copy.deepcopy(class_stats[-1])
@@ -330,10 +334,15 @@ def evaluate(pred_list):
             class_stats.append(temp_tpfp)
             class_prec_recall.append(temp_pr)
         prec_recall_list[k_pr].append([class_stats, class_prec_recall])
+
+        # calculate mean Average Precision
         ap_list[k_pr].append(get_ap(k_pr, class_prec_recall))
-        # print('Almost, just plot it now plot it')
-    print(ap_list)
-    return pred_list
+    mAP = 0
+    for ii in ap_list.keys():
+        mAP += ap_list[ii][0]
+    mAP/=len(ap_list.keys())
+    print('mAP : ', mAP)
+    return ap_list
 
 
 def run():
@@ -342,7 +351,7 @@ def run():
     print('Plot GT and final Predictions================================')
     print_it_on_images(final_list, print_it=False)
     print('Evaluate=====================================================')
-    evaluate(final_list)
+    mAP = evaluate(final_list)
 
 
 if __name__ == "__main__":

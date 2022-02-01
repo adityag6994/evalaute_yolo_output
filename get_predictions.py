@@ -11,6 +11,18 @@ import cv2
 
 eps = 0.00001
 
+# prediction_list = ['/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/757.npy',
+#                    '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/4229.npy'
+#                    ]
+# img_list = [
+#     '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/images/COCO_val2014_000000000757.jpg',
+#     '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/images/COCO_val2014_000000004229.jpg'
+# ]
+# lbl_list = [
+#     '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/labels/COCO_val2014_000000000757.txt',
+#     '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/labels/COCO_val2014_000000004229.txt'
+# ]
+
 prediction_list = ['/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/285.npy',
                    '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/757.npy',
                    '/home/gabbar/Desktop/naukri_2022/code/yolo_postprocessing/extract_boxes/data/831.npy',
@@ -293,17 +305,17 @@ def get_ap(cls_id, prec_recall_table):
         a.append(gap * (i + 1))
 
     ap = []
-    ap_ = []
+    # ap_ = []
     for i in a:
         ans = 0
-        ans_ = 0
+        # ans_ = 0
         valid_p = [k for k in recall if k >= i]
         if len(valid_p):
             ans = prec[recall.index([k for k in recall if k >= i][0])]
-            ans_ = recall[valid_p.index(valid_p[0])]
+            # ans_ = recall[valid_p.index(valid_p[0])]
         # print(i, ans)
         ap.append(ans)
-        ap_.append(ans_)
+        # ap_.append(ans_)
     print(cls_id, ":", np.average(ap[:-1]))
     return np.average(ap[:-1])
 
@@ -355,7 +367,7 @@ def evaluate(pred_list, iou_th=0.3):
         total_gt_per_class[k].append(cnt)
         # for each class get corresponding gt for each prediction in respective class
 
-    pred_final = collections.defaultdict(list)
+    pred_final = collections.defaultdict(list) # contain list with assigned GT for valid predictions
     prec_recall_list = collections.defaultdict(list)  # all precision-recall values
     # assign corresponding GT to each prediction if IOU is greater than threshold
     # by assigning TP if it's greater than threshold, FP otherwise
@@ -411,10 +423,12 @@ def run():
     print('Plot GT and final Predictions================================')
     print_it_on_images(final_list, print_it=True)
     print('Evaluate=====================================================')
-    mAP = evaluate(final_list, iou_th=0.3)
+    mAP = evaluate(final_list, iou_th=0.5)
 
 
 if __name__ == "__main__":
     run()
+    # TODO : Adding @staticmethod, @classmethod thing
+    # TODO : Verify with more images
 
 print('Done!')
